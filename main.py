@@ -1,4 +1,6 @@
 from matplotlib import pyplot as plt
+from scipy.io import wavfile
+import sounddevice as sd
 import pandas as pd
 import numpy as np
 
@@ -14,7 +16,7 @@ def create_figure(title, signal_time_ms: np.ndarray, xlab='', ylab=''):
     add_signal_length_to_title(title, signal_time_ms)
     plt.xlim(signal_time_ms.min(), signal_time_ms.max())
 
-def main():
+def task_1():
     # Load the accelerometer and gyroscope data from the CSV files
     accelerometer_data = pd.read_csv('stand_1min.csv', sep=';', skiprows=1)
     gyroscope_data = pd.read_csv('stand_1min.csv', sep=';', skiprows=1)
@@ -29,6 +31,7 @@ def main():
     plt.plot(time_acc_ms, accelerometer_y, label='y (m/s²)', color='green', linestyle='-', linewidth=2)
     plt.plot(time_acc_ms, accelerometer_z, label='z (m/s²)', color='blue', linestyle='-', linewidth=2)
     plt.legend(loc='upper right')
+    plt.savefig('Accelerometer.png')
     plt.show()
 
     # Plot gyroscope data
@@ -41,8 +44,42 @@ def main():
     plt.plot(time_gyro_ms, gyroscope_y, label='y (rad/s)', color='green', linestyle='-', linewidth=2)
     plt.plot(time_gyro_ms, gyroscope_z, label='z (rad/s)', color='blue', linestyle='-', linewidth=2)
     plt.legend(loc='upper right')
+    plt.savefig('Gyroscope.png')
     plt.show()
 
+def record_audio(duration, sampling_rate):
+    print(f"Recording audio at {sampling_rate} Hz ({duration:.2f}s)...")
+    audio_data = sd.rec(int(duration * sampling_rate), samplerate=sampling_rate, channels=1, dtype='float64')
+    sd.wait()
+    return audio_data
+
+def save_audio(filename, audio_data, sampling_rate):
+    print(f"Saving audio to {filename}...")
+    wavfile.write(filename, sampling_rate, audio_data)
+
+def plot_audio(audio_data, sampling_rate, title):
+    audio_time_ms = np.linspace(0, len(audio_data) / sampling_rate * 1000, num=len(audio_data))
+    create_figure(title, audio_time_ms, 'Time (s)', 'Amplitude')
+    plt.plot(audio_time_ms, audio_data)
+    plt.savefig(f'{title}.png')
+    plt.show()
+
+def task_2():
+    duration = 5
+
+    sampling_rate_8k = 8000
+    audio_data_8k = record_audio(duration, sampling_rate_8k)
+    save_audio('audio_8k.wav', audio_data_8k, sampling_rate_8k)
+    plot_audio(audio_data_8k, sampling_rate_8k, 'Audio at 8 kHz')
+
+    sampling_rate_44k = 44100
+    audio_data_44k = record_audio(duration, sampling_rate_44k)
+    save_audio('audio_44k.wav', audio_data_44k, sampling_rate_44k)
+    plot_audio(audio_data_44k, sampling_rate_44k, 'Audio at 44.1 kHz')
+
+def main():
+    task_1()
+    task_2()
 
 if __name__ == "__main__":
     main()
