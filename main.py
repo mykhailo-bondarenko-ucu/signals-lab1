@@ -59,9 +59,12 @@ def save_audio(filename, audio_data, sampling_rate):
     print(f"Saving audio to {filename}...")
     wavfile.write(filename, sampling_rate, audio_data)
 
-def plot_single_signal(data, sampling_rate, title):
-    time_ms = np.linspace(0, len(data) / sampling_rate * 1000, num=len(data))
-    create_figure(title, time_ms, "Time (ms)", "Amplitude")
+def plot_single_signal(data, sampling_rate, title, ylab="Amplitude", seconds=False):
+    if seconds:
+        time_ms, xlab = np.linspace(0, len(data) / sampling_rate, num=len(data)), "Time (s)"
+    else:
+        time_ms, xlab = np.linspace(0, len(data) / sampling_rate * 1000, num=len(data)), "Time (ms)"
+    create_figure(title, time_ms, xlab, ylab, seconds)
     plt.plot(time_ms, data)
     plt.savefig(f"{title}.png")
     plt.show()
@@ -229,7 +232,7 @@ def task_7():
 
 def task_8():
     icp_data = np.loadtxt('TBI_ICP.txt')
-    plot_single_signal(icp_data, 125, 'Intracranial Pressure (ICP) Signal')
+    plot_single_signal(icp_data, 125, 'Intracranial Pressure (ICP) Signal', seconds=True, ylab="Amplitude (mmHg)")
     np.save("TBI_ICP.npy", icp_data)
 
 def main():
