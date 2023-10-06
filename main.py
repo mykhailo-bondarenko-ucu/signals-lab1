@@ -77,9 +77,13 @@ def task_2():
     save_audio('audio_44k.wav', audio_data_44k, sampling_rate_44k)
     plot_audio(audio_data_44k, sampling_rate_44k, 'Audio at 44.1 kHz')
 
+def task_3():
+    pass
+
 def main():
-    task_1()
-    task_2()
+    # task_1()
+    # task_2()
+    task_3()
 
 if __name__ == "__main__":
     main()
