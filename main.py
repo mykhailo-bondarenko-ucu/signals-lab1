@@ -4,6 +4,7 @@ import sounddevice as sd
 import scipy.io as sio
 import pandas as pd
 import numpy as np
+import os
 
 def add_signal_length_to_title(title, signal_time_ms: np.ndarray):
     dur_s = (signal_time_ms.max() - signal_time_ms.min()) / 1000
@@ -58,10 +59,10 @@ def save_audio(filename, audio_data, sampling_rate):
     print(f"Saving audio to {filename}...")
     wavfile.write(filename, sampling_rate, audio_data)
 
-def plot_single_signal(audio_data, sampling_rate, title):
-    audio_time_ms = np.linspace(0, len(audio_data) / sampling_rate * 1000, num=len(audio_data))
-    create_figure(title, audio_time_ms, 'Time (s)', 'Amplitude')
-    plt.plot(audio_time_ms, audio_data)
+def plot_single_signal(data, sampling_rate, title):
+    time_ms = np.linspace(0, len(data) / sampling_rate * 1000, num=len(data))
+    create_figure(title, time_ms, 'Time (ms)', 'Amplitude')
+    plt.plot(time_ms, data)
     plt.savefig(f'{title}.png')
     plt.show()
 
@@ -94,10 +95,37 @@ def task_3():
     np.save('eeg_healthy_signal', eeg_healthy)
     np.save('eeg_sick_signal', eeg_sick)
 
+def load_and_plot_ecg(file_path, title):
+    with np.load(file_path) as data:
+        signal = data['signal']
+        labels = data['labels']
+        labels_indexes = data['labels_indexes']
+        sampling_rate = data['fs']
+        units = data['units']
+
+    time_ms = np.linspace(0, signal.shape[0] / sampling_rate * 1000, num=signal.shape[0])
+    create_figure(title, time_ms, 'Time (ms)', f'Amplitude ({units})')
+    plt.plot(time_ms, signal)
+    for idx, label in zip(labels_indexes, labels):
+        plt.annotate(label, (time_ms[idx], signal[idx]), textcoords="offset points", xytext=(0,10), ha='center')
+    plt.savefig(f'{title}.png')
+    plt.show()
+
+def task_4():
+    norm_dir = "./norm"
+    anomaly_dir = "./anomaly"
+    norm_files = os.listdir(norm_dir)
+    anomaly_files = os.listdir(anomaly_dir)
+    first_norm_file = os.path.join(norm_dir, norm_files[0])
+    first_anomaly_file = os.path.join(anomaly_dir, anomaly_files[0])
+    load_and_plot_ecg(first_norm_file, "Normal ECG")
+    load_and_plot_ecg(first_anomaly_file, "Anomalous ECG")
+
 def main():
     # task_1()
     # task_2()
-    task_3()
+    # task_3()
+    task_4()
 
 if __name__ == "__main__":
     main()
