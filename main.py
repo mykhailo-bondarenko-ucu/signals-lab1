@@ -235,15 +235,77 @@ def task_8():
     plot_single_signal(icp_data, 125, 'Intracranial Pressure (ICP) Signal', seconds=True, ylab="Amplitude (mmHg)")
     np.save("TBI_ICP.npy", icp_data)
 
+def extract_signal_segment(
+        start_time_sec: np.dtype('float64'),
+        end_time_sec: np.dtype('float64'),
+        sample_rate: np.dtype('int64'),
+        signal_vector: np.ndarray
+    ):
+    """
+    Extract a segment of a signal based on start and end times in seconds.
+    The boundaries are included.
+
+    Args:
+        start_time_sec (float): Start time in seconds.
+        end_time_sec (float): End time in seconds.
+        sample_rate (int): Sample rate in Hz,
+        signal_vector (numpy.ndarray): Vector of signal values.
+
+    Returns:
+        extracted_time (numpy.ndarray): Time points of the extracted segment.
+        extracted_signal (numpy.ndarray): Signal values of the extracted segment.
+
+    Raises:
+        ValueError: If start_time_sec or end_time_sec are outside the time range.
+    """
+    if start_time_sec < 0 or end_time_sec > len(signal_vector) / sample_rate:
+        raise ValueError("Start time or end time is outside the time range.")
+    
+    time_vector = np.linspace(0, len(signal_vector) / sample_rate, len(signal_vector))
+
+    # first begger and last smaller
+    start_index = np.argmax(time_vector >= start_time_sec)
+    end_index = np.argmin(time_vector <= end_time_sec)
+    
+    # last occurence of max value
+    while (end_index+1) < len(time_vector) and time_vector[end_index] == time_vector[end_index+1]:
+        end_index += 1
+
+    extracted_time = time_vector[start_index:end_index + 1]
+    extracted_signal = signal_vector[start_index:end_index + 1]
+
+    return extracted_time, extracted_signal
+
+def task_9():
+    sample_rate = 125
+    signal_duration = 10
+    time_vector = np.linspace(0, signal_duration, sample_rate * signal_duration)
+    signal_vector = np.sin(2 * np.pi * time_vector)
+    create_figure("Initial Signal", time_vector, xlab="Time (s)", seconds=True)
+    plt.plot(time_vector, signal_vector)
+    plt.savefig("initial signal.png")
+    plt.show()
+    try:
+        extracted_time, extracted_signal = extract_signal_segment(
+            2, 6, sample_rate, signal_vector
+        )
+        create_figure("Extracted Signal Segment", extracted_time, xlab="Time (s)", seconds=True)
+        plt.plot(extracted_time, extracted_signal)
+        plt.savefig("extracted signal.png")
+        plt.show()
+    except ValueError as e:
+        print(f"Error: {e}")
+
 def main():
-    # task_1()
-    # task_2()
-    # task_3()
-    # task_4()
-    # task_5()
-    # task_6()
-    # task_7()
+    task_1()
+    task_2()
+    task_3()
+    task_4()
+    task_5()
+    task_6()
+    task_7()
     task_8()
+    task_9()
 
 if __name__ == "__main__":
     main()
