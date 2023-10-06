@@ -227,6 +227,11 @@ def task_7():
     spo2_ravg = moving_average_no_overlap(df['SpO2(%)'], 30)
     plot_spo2_and_hr(time, hr_ravg, spo2_ravg, f'{filename[:-4]}_avg_signals.png', postfix=f" (30 second window) ({time[-1]} seconds)")
 
+def task_8():
+    icp_data = np.loadtxt('TBI_ICP.txt')
+    plot_single_signal(icp_data, 125, 'Intracranial Pressure (ICP) Signal')
+    np.save("TBI_ICP.npy", icp_data)
+
 def main():
     # task_1()
     # task_2()
@@ -234,7 +239,8 @@ def main():
     # task_4()
     # task_5()
     # task_6()
-    task_7()
+    # task_7()
+    task_8()
 
 if __name__ == "__main__":
     main()
