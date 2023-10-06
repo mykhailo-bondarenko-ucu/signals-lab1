@@ -1,3 +1,4 @@
+from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 from scipy.io import wavfile
 import sounddevice as sd
@@ -6,24 +7,24 @@ import pandas as pd
 import numpy as np
 import os
 
-def add_signal_length_to_title(title, signal_time_ms: np.ndarray):
-    dur_s = (signal_time_ms.max() - signal_time_ms.min()) / 1000
+def add_signal_length_to_title(title, signal_time_ms: np.ndarray, seconds=False):
+    dur_s = signal_time_ms.max() - signal_time_ms.min()
+    if not seconds:  # then miliseconds
+        dur_s /= 1000
     plt.title(f"{title} ({dur_s:.2f} seconds)")
 
-def create_figure(title, signal_time_ms: np.ndarray, xlab='', ylab=''):
+def create_figure(title, signal_time_ms: np.ndarray, xlab='', ylab='', seconds=False):
     plt.figure(figsize=(8, 6))
     plt.xlabel(xlab)
     plt.ylabel(ylab)
     plt.grid(True)
-    add_signal_length_to_title(title, signal_time_ms)
+    add_signal_length_to_title(title, signal_time_ms, seconds)
     plt.xlim(signal_time_ms.min(), signal_time_ms.max())
 
 def task_1():
-    # Load the accelerometer and gyroscope data from the CSV files
     accelerometer_data = pd.read_csv('stand_1min.csv', sep=';', skiprows=1)
     gyroscope_data = pd.read_csv('stand_1min.csv', sep=';', skiprows=1)
 
-    # Plot accelerometer data
     time_acc_ms = accelerometer_data['Time since start in ms ']
     accelerometer_x = accelerometer_data['ACCELEROMETER X (m/s²)']
     accelerometer_y = accelerometer_data['ACCELEROMETER Y (m/s²)']
@@ -36,7 +37,6 @@ def task_1():
     plt.savefig('Accelerometer.png')
     plt.show()
 
-    # Plot gyroscope data
     time_gyro_ms = accelerometer_data['Time since start in ms ']
     gyroscope_x = gyroscope_data['GYROSCOPE X (rad/s)']
     gyroscope_y = gyroscope_data['GYROSCOPE Y (rad/s)']
@@ -121,11 +121,38 @@ def task_4():
     load_and_plot_ecg(first_norm_file, "Normal ECG")
     load_and_plot_ecg(first_anomaly_file, "Anomalous ECG")
 
+def process_heart_signal(signal_periods_ms, title):
+    signal_time_ms = np.cumsum(signal_periods_ms)
+    # convert to Hz for every time step
+    signal_freq = 1000 / signal_periods_ms
+
+    interpolation_function = interp1d(signal_time_ms, signal_freq, kind='linear', fill_value="extrapolate")
+    new_time_ms = np.arange(signal_time_ms.min(), signal_time_ms.max() + 1000, step=1000)
+
+    interpolated_freq = interpolation_function(new_time_ms)
+
+    new_time_s = new_time_ms / 1000
+
+    create_figure(title, new_time_s, 'Time (s)', 'Frequency (Hz)', seconds=True)
+    plt.plot(new_time_s, interpolated_freq)
+    plt.savefig(f'{title}.png')
+    plt.show()
+
+    np.save(f"{title}.npy", interpolated_freq)
+
+def task_5():
+    healthy_signal_periods_ms = sio.loadmat('heart_rate_norm.mat')['hr_norm'].T[0][1:]
+    sick_signal_periods_ms = sio.loadmat('heart_rate_apnea.mat')['hr_ap'].T[0][1:]
+
+    process_heart_signal(healthy_signal_periods_ms, 'Healthy Heart Rate Signal')
+    process_heart_signal(sick_signal_periods_ms, 'Sick Heart Rate Signal')
+
 def main():
     # task_1()
     # task_2()
     # task_3()
-    task_4()
+    # task_4()
+    task_5()
 
 if __name__ == "__main__":
     main()
