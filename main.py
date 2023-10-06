@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 from scipy.io import wavfile
 import sounddevice as sd
+import scipy.io as sio
 import pandas as pd
 import numpy as np
 
@@ -57,7 +58,7 @@ def save_audio(filename, audio_data, sampling_rate):
     print(f"Saving audio to {filename}...")
     wavfile.write(filename, sampling_rate, audio_data)
 
-def plot_audio(audio_data, sampling_rate, title):
+def plot_single_signal(audio_data, sampling_rate, title):
     audio_time_ms = np.linspace(0, len(audio_data) / sampling_rate * 1000, num=len(audio_data))
     create_figure(title, audio_time_ms, 'Time (s)', 'Amplitude')
     plt.plot(audio_time_ms, audio_data)
@@ -70,15 +71,28 @@ def task_2():
     sampling_rate_8k = 8000
     audio_data_8k = record_audio(duration, sampling_rate_8k)
     save_audio('audio_8k.wav', audio_data_8k, sampling_rate_8k)
-    plot_audio(audio_data_8k, sampling_rate_8k, 'Audio at 8 kHz')
+    plot_single_signal(audio_data_8k, sampling_rate_8k, 'Audio at 8 kHz')
 
     sampling_rate_44k = 44100
     audio_data_44k = record_audio(duration, sampling_rate_44k)
     save_audio('audio_44k.wav', audio_data_44k, sampling_rate_44k)
-    plot_audio(audio_data_44k, sampling_rate_44k, 'Audio at 44.1 kHz')
+    plot_single_signal(audio_data_44k, sampling_rate_44k, 'Audio at 44.1 kHz')
+
+def load_eeg_signal(file_path):
+    mat_data = sio.loadmat(file_path)
+    eeg_signal = mat_data['sig'][0]
+    return eeg_signal
 
 def task_3():
-    pass
+    eeg_healthy = load_eeg_signal('EEG_healthy/eeg_healthy_1.mat')
+    eeg_sick = load_eeg_signal('EEG_sick/eeg_sick_1.mat')
+
+    sampling_rate = 256
+    plot_single_signal(eeg_healthy, sampling_rate, 'EEG Signal (Healthy)')
+    plot_single_signal(eeg_sick, sampling_rate, 'EEG Signal (Sick)')
+
+    np.save('eeg_healthy_signal', eeg_healthy)
+    np.save('eeg_sick_signal', eeg_sick)
 
 def main():
     # task_1()
