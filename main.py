@@ -148,7 +148,7 @@ def task_5():
     process_heart_signal(sick_signal_periods_ms, "Sick Heart Rate Signal")
 
 def task_6():
-    folder_path = "./cop_data/data"
+    data_dir = "./cop_data/data"
     all_columnns = ["time_ms", "top_left_f_kg", "top_right_f_kg", "bottom_left_f_kg", "bottom_right_f_kg", "cop_x", "cop_y", "total_f"]
     selected_columns = ["cop_x", "cop_y"]
 
@@ -157,7 +157,7 @@ def task_6():
 
         for athlete_type in ["handball", "acrobats"]:
             athlete_data = pd.DataFrame(columns=selected_columns)
-            signal_dir = os.path.join(folder_path, athlete_type, signal_type)
+            signal_dir = os.path.join(data_dir, athlete_type, signal_type)
             signal_files = os.listdir(signal_dir)
             file_name = signal_files[0]  # checking the first file for stats
             file_path = os.path.join(signal_dir, file_name)
@@ -188,13 +188,53 @@ def task_6():
         print(pd.DataFrame(stats_dict))
         print()
 
+def plot_spo2_and_hr(time, hr, spo2, filename, postfix=''):
+    plt.figure(figsize=(12, 6))
+    plt.subplot(2, 1, 1)
+    plt.plot(time, hr, color='blue')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Heart Rate (bpm)')
+    plt.title(f'Heart Rate Signal{postfix}')
+    plt.grid(True)
+    plt.xlim(time.min(), time.max())
+
+    plt.subplot(2, 1, 2)
+    plt.plot(time, spo2, color='green')
+    plt.xlabel('Time (s)')
+    plt.ylabel('SpO2 (%)')
+    plt.title(f'SpO2 Signal{postfix}')
+    plt.grid(True)
+    plt.xlim(time.min(), time.max())
+
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.show()
+
+def moving_average_no_overlap(data, window_size):
+    data_mat = data.values[:(len(data) // window_size) * window_size].reshape(-1, window_size)
+    return np.mean(data_mat, axis=1)
+
+def task_7():
+    data_dir = 'spo2_hr_signals/signals/'
+
+    filename = os.listdir(data_dir)[0]
+    df = pd.read_csv(os.path.join(data_dir, filename))
+
+    plot_spo2_and_hr(df['Elapsed time(seconds)'], df['hr (bpm)'], df['SpO2(%)'], f'{filename[:-4]}_signals.png', postfix=f"({df['Elapsed time(seconds)'].values[-1]} seconds)")
+
+    time = df['Elapsed time(seconds)'].values[30::30]
+    hr_ravg = moving_average_no_overlap(df['hr (bpm)'], 30)
+    spo2_ravg = moving_average_no_overlap(df['SpO2(%)'], 30)
+    plot_spo2_and_hr(time, hr_ravg, spo2_ravg, f'{filename[:-4]}_avg_signals.png', postfix=f" (30 second window) ({time[-1]} seconds)")
+
 def main():
     # task_1()
     # task_2()
     # task_3()
     # task_4()
     # task_5()
-    task_6()
+    # task_6()
+    task_7()
 
 if __name__ == "__main__":
     main()
